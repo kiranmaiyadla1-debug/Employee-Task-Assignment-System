@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('dashboard')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('dashboard')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1>Dashboard</h1>
+                <p class="text-muted mb-0">Live overview of employees, tasks and workload.</p>
+            </div>
+            <a th:href="@{/tasks/new}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Task</a>
+        </div>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <!-- Overload alert -->
+        <div th:if="${dashboard.overloadedEmployees > 0}" class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+            <div>
+                <strong th:text="${dashboard.overloadedEmployees}">1</strong>
+                employee(s) hold more than <span th:text="${dashboard.maxActiveTasks}">5</span> active tasks.
+                No assignments were removed automatically.
+                <a th:href="@{/workload(filter='overloaded')}" class="alert-link">View overloaded employees</a>
+            </div>
+        </div>
+
+        <!-- Statistic cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-value" id="statEmployees" th:text="${dashboard.totalEmployees}">0</div>
+                    <div class="stat-label">Total Employees</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-card-checklist"></i></div>
+                    <div class="stat-value" id="statTasks" th:text="${dashboard.totalTasks}">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="stat-value" id="statActive" th:text="${dashboard.activeTasks}">0</div>
+                    <div class="stat-label">Active Tasks</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check2-circle"></i></div>
+                    <div class="stat-value" id="statCompleted" th:text="${dashboard.completedTasks}">0</div>
+                    <div class="stat-label">Completed Tasks</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-8 col-xl-4">
+                <div class="stat-card" th:classappend="${dashboard.overloadedEmployees > 0} ? 'stat-danger'">
+                    <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div class="stat-value" id="statOverloaded" th:text="${dashboard.overloadedEmployees}">0</div>
+                    <div class="stat-label">Overloaded Employees (more than <span th:text="${dashboard.maxActiveTasks}">5</span> active tasks)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <!-- Employee-wise workload -->
+            <div class="col-xl-7">
+                <div class="card panel h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-bar-chart-line me-2"></i>Employee-wise Workload</span>
+                        <a th:href="@{/workload}" class="small">Details</a>
+                    </div>
+                    <div class="card-body">
+                        <p th:if="${#lists.isEmpty(dashboard.workloads)}" class="text-muted mb-0">No employees yet.</p>
+                        <div th:each="w : ${dashboard.workloads}" class="workload-row" th:classappend="${w.overloaded} ? 'is-overloaded'">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-semibold">
+                                    <a th:href="@{/tasks(employeeId=${w.employeeId}, view='active')}" th:text="${w.name}" class="text-reset text-decoration-none">Name</a>
+                                    <span th:if="${w.overloaded}" class="badge bg-danger ms-1">Overloaded +<span th:text="${w.excess}">1</span></span>
+                                    <span th:if="${w.atCapacity}" class="badge bg-warning text-dark ms-1">Full</span>
+                                </span>
+                                <span class="small" th:classappend="${w.overloaded} ? 'text-danger fw-bold' : 'text-muted'">
+                                    <span th:text="${w.activeCount}">0</span> / <span th:text="${w.limit}">5</span> active
+                                </span>
+                            </div>
+                            <div class="progress mt-1" style="height: 10px;">
+                                <div class="progress-bar"
+                                     th:classappend="${w.overloaded} ? 'bg-danger' : (${w.atCapacity} ? 'bg-warning' : 'bg-success')"
+                                     th:style="'width:' + ${w.percent} + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task status statistics -->
+            <div class="col-xl-5">
+                <div class="card panel h-100">
+                    <div class="card-header"><i class="bi bi-pie-chart me-2"></i>Task Status Statistics</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between"><span>Pending</span>
+                                <span><strong th:text="${dashboard.pendingTasks}">0</strong> <small class="text-muted" th:text="'(' + ${dashboard.pendingPercent} + '%)'"></small></span></div>
+                            <div class="progress" style="height: 12px;"><div class="progress-bar bg-warning" th:style="'width:' + ${dashboard.pendingPercent} + '%'"></div></div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between"><span>In Progress</span>
+                                <span><strong th:text="${dashboard.inProgressTasks}">0</strong> <small class="text-muted" th:text="'(' + ${dashboard.inProgressPercent} + '%)'"></small></span></div>
+                            <div class="progress" style="height: 12px;"><div class="progress-bar bg-primary" th:style="'width:' + ${dashboard.inProgressPercent} + '%'"></div></div>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between"><span>Completed</span>
+                                <span><strong th:text="${dashboard.completedTasks}">0</strong> <small class="text-muted" th:text="'(' + ${dashboard.completedPercent} + '%)'"></small></span></div>
+                            <div class="progress" style="height: 12px;"><div class="progress-bar bg-success" th:style="'width:' + ${dashboard.completedPercent} + '%'"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent assignments -->
+        <div class="card panel">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2"></i>Recent Task Assignments</span>
+                <a th:href="@{/assignments}" class="small">Assign a task</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Task</th><th>Assigned To</th><th>Priority</th><th>Status</th><th>Deadline</th><th>Assigned</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(dashboard.recentAssignments)}"><td colspan="6" class="text-center text-muted py-4">No assignments yet.</td></tr>
+                    <tr th:each="t : ${dashboard.recentAssignments}">
+                        <td class="fw-semibold" th:text="${t.title}">Task</td>
+                        <td th:text="${t.assigneeName}">Employee</td>
+                        <td><span class="badge" th:classappend="${t.priority.cssClass}" th:text="${t.priority.label}">Medium</span></td>
+                        <td><span class="badge" th:classappend="${t.status.cssClass}" th:text="${t.status.label}">Pending</span></td>
+                        <td th:classappend="${t.overdue} ? 'text-danger fw-semibold'" th:text="${#temporals.format(t.deadline, 'dd MMM yyyy')}">01 Jan 2026</td>
+                        <td class="text-muted small" th:text="${#temporals.format(t.assignedAt, 'dd MMM, HH:mm')}">01 Jan, 10:00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

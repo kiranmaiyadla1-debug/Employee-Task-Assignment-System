@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Task Form')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('tasks')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('tasks')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1 th:text="${taskId == null} ? 'New Task' : 'Edit Task'">New Task</h1>
+                <p class="text-muted mb-0">
+                    An employee can hold at most <strong th:text="${maxActive}">5</strong> active (Pending / In Progress) tasks.
+                </p>
+            </div>
+            <a th:href="@{/tasks}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <!-- Workload error appears here (e.g. employee already has 5 active tasks) -->
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="card panel form-card">
+            <div class="card-body">
+                <form th:action="${taskId == null} ? @{/tasks} : @{/tasks/{id}(id=${taskId})}"
+                      th:object="${task}" method="post" novalidate>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="title">Title</label>
+                            <input type="text" id="title" th:field="*{title}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'" maxlength="150">
+                            <div class="invalid-feedback" th:errors="*{title}">Title error</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="description">Description</label>
+                            <textarea id="description" th:field="*{description}" rows="3" class="form-control"
+                                      th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'" maxlength="1000"></textarea>
+                            <div class="invalid-feedback" th:errors="*{description}">Description error</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="priority">Priority</label>
+                            <select id="priority" th:field="*{priority}" class="form-select">
+                                <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.label}">Medium</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="deadline">Deadline</label>
+                            <input type="date" id="deadline" th:field="*{deadline}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('deadline')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{deadline}">Deadline error</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="status">Status</label>
+                            <select id="status" th:field="*{status}" class="form-select">
+                                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}">Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="assigneeId">Assign to employee</label>
+                            <select id="assigneeId" th:field="*{assigneeId}" class="form-select">
+                                <option value="">-- Unassigned --</option>
+                                <option th:each="e : ${employees}" th:value="${e.id}"
+                                        th:text="${e.name} + ' (' + ${e.department} + ') - ' + ${e.activeTasks} + '/' + ${maxActive} + ' active' + (${e.overloaded} ? ' - OVERLOADED' : (${e.atCapacity} ? ' - FULL' : ''))">Employee</option>
+                            </select>
+                            <div class="form-text">Employees marked FULL or OVERLOADED cannot receive another active task.</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i>
+                            <span th:text="${taskId == null} ? 'Create Task' : 'Save Changes'">Save</span></button>
+                        <a th:href="@{/tasks}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

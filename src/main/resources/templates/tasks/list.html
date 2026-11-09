@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tasks')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('tasks')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('tasks')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1>Tasks</h1>
+                <p class="text-muted mb-0">Create, edit, filter and update the progress of tasks.</p>
+            </div>
+            <a th:href="@{/tasks/new}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Task</a>
+        </div>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <!-- Active / completed tabs (keep the other filters) -->
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><a class="nav-link" th:classappend="${view == 'all'} ? 'active'"
+                   th:href="@{/tasks(view='all', q=${q}, status=${fStatus}, priority=${fPriority}, employeeId=${fEmployeeId})}">All Tasks</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${view == 'active'} ? 'active'"
+                   th:href="@{/tasks(view='active', q=${q}, status=${fStatus}, priority=${fPriority}, employeeId=${fEmployeeId})}">Active (Pending + In Progress)</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${view == 'completed'} ? 'active'"
+                   th:href="@{/tasks(view='completed', q=${q}, status=${fStatus}, priority=${fPriority}, employeeId=${fEmployeeId})}">Completed</a></li>
+        </ul>
+
+        <!-- Filters -->
+        <form th:action="@{/tasks}" method="get" class="card panel mb-3">
+            <div class="card-body row g-2 align-items-end">
+                <input type="hidden" name="view" th:value="${view}">
+                <div class="col-md-3">
+                    <label class="form-label" for="q">Search</label>
+                    <input type="text" id="q" name="q" class="form-control" th:value="${q}" placeholder="Title, description or employee">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fstatus">Status</label>
+                    <select id="fstatus" name="status" class="form-select">
+                        <option value="">Any</option>
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${s == fStatus}">Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="fpriority">Priority</label>
+                    <select id="fpriority" name="priority" class="form-select">
+                        <option value="">Any</option>
+                        <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.label}" th:selected="${p == fPriority}">High</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="femployee">Employee</label>
+                    <select id="femployee" name="employeeId" class="form-select">
+                        <option value="">Anyone</option>
+                        <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.name}"
+                                th:selected="${e.id == fEmployeeId}">Employee</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary flex-fill"><i class="bi bi-funnel"></i> Filter</button>
+                    <a th:href="@{/tasks}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="card panel">
+            <div class="card-header"><span th:text="${#lists.size(tasks)}">0</span> task(s)</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr><th>Task</th><th>Priority</th><th>Deadline</th><th>Assigned To</th><th style="min-width:160px;">Status</th><th class="text-end">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(tasks)}"><td colspan="6" class="text-center text-muted py-4">No tasks match your filters.</td></tr>
+                    <tr th:each="t : ${tasks}">
+                        <td>
+                            <div class="fw-semibold" th:text="${t.title}">Title</div>
+                            <div class="small text-muted text-truncate-2" th:text="${t.description}">Description</div>
+                        </td>
+                        <td><span class="badge" th:classappend="${t.priority.cssClass}" th:text="${t.priority.label}">Medium</span></td>
+                        <td class="text-nowrap" th:classappend="${t.overdue} ? 'text-danger fw-semibold'">
+                            <span th:text="${#temporals.format(t.deadline, 'dd MMM yyyy')}">01 Jan 2026</span>
+                            <span th:if="${t.overdue}" class="badge bg-danger ms-1">Overdue</span>
+                        </td>
+                        <td>
+                            <span th:if="${t.assigned}" th:text="${t.assigneeName}">Employee</span>
+                            <span th:unless="${t.assigned}" class="badge bg-secondary-subtle text-secondary">Unassigned</span>
+                        </td>
+                        <td>
+                            <!-- Change status: submits automatically when a new value is chosen -->
+                            <form th:action="@{/tasks/{id}/status(id=${t.id})}" method="post" class="status-form">
+                                <select name="status" class="form-select form-select-sm status-select" aria-label="Task status">
+                                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${s == t.status}">Pending</option>
+                                </select>
+                                <noscript><button type="submit" class="btn btn-sm btn-outline-primary mt-1">Update</button></noscript>
+                            </form>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a th:href="@{/tasks/{id}/edit(id=${t.id})}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                            <form th:action="@{/tasks/{id}/delete(id=${t.id})}" method="post" class="d-inline"
+                                  th:attr="data-confirm='Delete task ' + ${t.title} + '?'">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

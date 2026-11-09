@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Task Assignment')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('assignments')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('assignments')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1>Task Assignment</h1>
+                <p class="text-muted mb-0">
+                    Give a task to an employee. A new assignment is rejected when the employee already has
+                    <strong th:text="${maxActive}">5</strong> active tasks.
+                </p>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="row g-3 mb-4">
+            <!-- Assign form -->
+            <div class="col-lg-5">
+                <div class="card panel h-100">
+                    <div class="card-header"><i class="bi bi-person-check me-2"></i>Assign a Task</div>
+                    <div class="card-body">
+                        <form th:action="@{/assignments}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label" for="taskId">Task (active tasks only)</label>
+                                <select id="taskId" name="taskId" class="form-select" required>
+                                    <option value="" disabled selected>Select a task...</option>
+                                    <option th:each="t : ${activeTasks}" th:value="${t.id}"
+                                            th:text="${t.title} + ' [' + ${t.status.label} + '] - ' + (${t.assigned} ? 'now: ' + ${t.assigneeName} : 'unassigned')">Task</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="employeeId">Employee</label>
+                                <select id="employeeId" name="employeeId" class="form-select" required>
+                                    <option value="" disabled selected>Select an employee...</option>
+                                    <option th:each="e : ${employees}" th:value="${e.id}"
+                                            th:text="${e.name} + ' - ' + ${e.activeTasks} + '/' + ${maxActive} + ' active' + (${e.overloaded} ? ' (OVERLOADED)' : (${e.atCapacity} ? ' (FULL)' : ''))">Employee</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-arrow-right-circle"></i> Assign Task</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employee capacity -->
+            <div class="col-lg-7">
+                <div class="card panel h-100">
+                    <div class="card-header"><i class="bi bi-speedometer me-2"></i>Employee Capacity</div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead><tr><th>Employee</th><th style="width:45%;">Active tasks</th><th>Free slots</th></tr></thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(employees)}"><td colspan="3" class="text-center text-muted py-3">Add employees first.</td></tr>
+                            <tr th:each="e : ${employees}" th:classappend="${e.overloaded} ? 'table-danger overloaded-row'">
+                                <td class="fw-semibold" th:text="${e.name}">Name</td>
+                                <td>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar"
+                                             th:classappend="${e.overloaded} ? 'bg-danger' : (${e.atCapacity} ? 'bg-warning' : 'bg-success')"
+                                             th:style="'width:' + ${e.activeTasks >= maxActive ? 100 : (e.activeTasks * 100 / maxActive)} + '%'"></div>
+                                    </div>
+                                    <small th:text="${e.activeTasks} + ' / ' + ${maxActive}">2 / 5</small>
+                                </td>
+                                <td>
+                                    <span th:if="${e.overloaded}" class="badge bg-danger">Overloaded</span>
+                                    <span th:if="${e.atCapacity}" class="badge bg-warning text-dark">Full</span>
+                                    <span th:if="${!e.overloaded and !e.atCapacity}" class="badge bg-success" th:text="${maxActive - e.activeTasks}">3</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Unassigned tasks with quick assign -->
+        <div class="card panel mb-4">
+            <div class="card-header"><i class="bi bi-inboxes me-2"></i>Unassigned Active Tasks</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Task</th><th>Priority</th><th>Deadline</th><th style="min-width:300px;">Quick assign</th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(unassigned)}"><td colspan="4" class="text-center text-muted py-4">All active tasks are assigned.</td></tr>
+                    <tr th:each="t : ${unassigned}">
+                        <td class="fw-semibold" th:text="${t.title}">Task</td>
+                        <td><span class="badge" th:classappend="${t.priority.cssClass}" th:text="${t.priority.label}">Medium</span></td>
+                        <td th:text="${#temporals.format(t.deadline, 'dd MMM yyyy')}">01 Jan 2026</td>
+                        <td>
+                            <form th:action="@{/assignments}" method="post" class="d-flex gap-2">
+                                <input type="hidden" name="taskId" th:value="${t.id}">
+                                <select name="employeeId" class="form-select form-select-sm" required aria-label="Employee">
+                                    <option value="" disabled selected>Employee...</option>
+                                    <option th:each="e : ${employees}" th:value="${e.id}"
+                                            th:text="${e.name} + ' (' + ${e.activeTasks} + '/' + ${maxActive} + ')'">Employee</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">Assign</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent assignments -->
+        <div class="card panel">
+            <div class="card-header"><i class="bi bi-clock-history me-2"></i>Recent Assignments</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Task</th><th>Employee</th><th>Status</th><th>Assigned</th><th class="text-end"></th></tr></thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(recent)}"><td colspan="5" class="text-center text-muted py-4">No assignments yet.</td></tr>
+                    <tr th:each="t : ${recent}">
+                        <td class="fw-semibold" th:text="${t.title}">Task</td>
+                        <td th:text="${t.assigneeName}">Employee</td>
+                        <td><span class="badge" th:classappend="${t.status.cssClass}" th:text="${t.status.label}">Pending</span></td>
+                        <td class="text-muted small" th:text="${#temporals.format(t.assignedAt, 'dd MMM, HH:mm')}">01 Jan, 10:00</td>
+                        <td class="text-end">
+                            <form th:action="@{/assignments/{id}/unassign(id=${t.id})}" method="post" class="d-inline"
+                                  th:attr="data-confirm='Remove the assignment of ' + ${t.title} + '?'">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Unassign</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

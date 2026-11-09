@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Employee Form')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('employees')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('employees')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1 th:text="${employeeId == null} ? 'Add Employee' : 'Edit Employee'">Add Employee</h1>
+                <p class="text-muted mb-0">All fields are required.</p>
+            </div>
+            <a th:href="@{/employees}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div class="card panel form-card">
+            <div class="card-body">
+                <form th:action="${employeeId == null} ? @{/employees} : @{/employees/{id}(id=${employeeId})}"
+                      th:object="${employee}" method="post" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="name">Full name</label>
+                            <input type="text" id="name" th:field="*{name}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" maxlength="100">
+                            <div class="invalid-feedback" th:errors="*{name}">Name error</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" th:field="*{email}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'" maxlength="150">
+                            <div class="invalid-feedback" th:errors="*{email}">Email error</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="department">Department</label>
+                            <input type="text" id="department" th:field="*{department}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('department')} ? 'is-invalid'" maxlength="100">
+                            <div class="invalid-feedback" th:errors="*{department}">Department error</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="designation">Designation</label>
+                            <input type="text" id="designation" th:field="*{designation}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('designation')} ? 'is-invalid'" maxlength="100">
+                            <div class="invalid-feedback" th:errors="*{designation}">Designation error</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i>
+                            <span th:text="${employeeId == null} ? 'Add Employee' : 'Save Changes'">Save</span></button>
+                        <a th:href="@{/employees}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

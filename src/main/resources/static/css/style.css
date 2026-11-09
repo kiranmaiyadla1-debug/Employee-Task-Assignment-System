@@ -1,0 +1,92 @@
+/* TaskFlow - admin dashboard styles (on top of Bootstrap 5) */
+:root {
+    --sidebar-w: 250px;
+    --brand-1: #4f46e5;
+    --brand-2: #7c3aed;
+    --bg: #f4f6fb;
+}
+
+body {
+    background: var(--bg);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---- layout ---- */
+.app-shell { display: flex; min-height: 100vh; }
+.content { flex: 1; min-width: 0; padding: 1.75rem 2rem; }
+@media (max-width: 991.98px) { .content { padding: 1rem; } }
+
+/* ---- sidebar ---- */
+.sidebar {
+    width: var(--sidebar-w);
+    flex: 0 0 var(--sidebar-w);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 1.5rem 1rem;
+    background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+}
+.sidebar-offcanvas { background: #1e1b4b; color: #fff; width: 260px; }
+.brand {
+    display: flex; align-items: center; gap: .6rem;
+    margin-bottom: 1.75rem;
+    color: #fff; font-size: 1.35rem; font-weight: 700; text-decoration: none;
+}
+.brand i { color: #a5b4fc; }
+.sidebar .nav-link, .sidebar-offcanvas .nav-link {
+    color: #c7d2fe; border-radius: .6rem; padding: .65rem .9rem;
+    display: flex; align-items: center; gap: .7rem;
+}
+.sidebar .nav-link:hover, .sidebar-offcanvas .nav-link:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.sidebar .nav-link.active, .sidebar-offcanvas .nav-link.active {
+    background: linear-gradient(90deg, var(--brand-1), var(--brand-2)); color: #fff;
+}
+.sidebar-foot { color: #a5b4fc; opacity: .85; }
+.topbar { background: #1e1b4b; height: 56px; position: sticky; top: 0; z-index: 1030; }
+
+/* ---- page header ---- */
+.page-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+}
+.page-head h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 .15rem; }
+
+/* ---- cards ---- */
+.panel { border: 0; border-radius: .9rem; box-shadow: 0 1px 3px rgba(16, 24, 40, .08); }
+.panel .card-header { background: transparent; font-weight: 600; border-bottom: 1px solid #eef0f6; padding: .9rem 1.1rem; }
+.form-card { max-width: 860px; }
+
+.stat-card {
+    background: #fff; border-radius: .9rem; padding: 1.1rem 1.2rem; height: 100%;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .08); border-left: 4px solid transparent;
+}
+.stat-card.stat-danger { border-left-color: #dc3545; background: #fff5f5; }
+.stat-icon {
+    width: 42px; height: 42px; border-radius: .7rem; font-size: 1.25rem;
+    display: flex; align-items: center; justify-content: center; margin-bottom: .6rem;
+}
+.stat-value { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+.stat-label { color: #6b7280; font-size: .85rem; }
+
+/* ---- workload ---- */
+.workload-row { padding: .55rem .6rem; border-radius: .6rem; margin-bottom: .25rem; }
+.workload-row.is-overloaded { background: #fff1f2; border: 1px solid #fecdd3; }
+
+/* Overloaded employees are highlighted in red everywhere */
+.overloaded-row > td { background-color: #ffe3e6 !important; }
+.overloaded-row .fw-semibold { color: #b4232f; }
+
+/* ---- tables ---- */
+.table > :not(caption) > * > * { padding: .75rem 1rem; }
+.table thead th {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
+    color: #6b7280; background: #fafbff; white-space: nowrap;
+}
+.text-truncate-2 {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 380px;
+}
+.status-form { margin: 0; }
+
+.btn-primary { background: linear-gradient(90deg, var(--brand-1), var(--brand-2)); border: 0; }
+.btn-primary:hover { filter: brightness(1.08); }
+.nav-pills .nav-link.active, .nav-tabs .nav-link.active { font-weight: 600; }

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Workload Monitor')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: topbar('workload')}"></div>
+<div class="app-shell">
+    <aside th:replace="~{fragments/layout :: sidebar('workload')}"></aside>
+
+    <main class="content">
+        <div class="page-head">
+            <div>
+                <h1>Workload Monitor</h1>
+                <p class="text-muted mb-0">
+                    Active = Pending + In Progress. Limit: <strong th:text="${maxActive}">5</strong> per employee.
+                    Employees above the limit are shown in red.
+                </p>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/layout :: flash}"></div>
+
+        <div th:if="${overloadedCount > 0}" class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+            <div><strong th:text="${overloadedCount}">1</strong> employee(s) already hold more than
+                <span th:text="${maxActive}">5</span> active tasks. Their assignments were kept; they cannot receive new ones
+                until they are back under the limit.</div>
+        </div>
+
+        <ul class="nav nav-pills mb-3">
+            <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'all'} ? 'active'" th:href="@{/workload(filter='all')}">All</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'overloaded'} ? 'active'" th:href="@{/workload(filter='overloaded')}">Overloaded</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'full'} ? 'active'" th:href="@{/workload(filter='full')}">At limit</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${filter == 'available'} ? 'active'" th:href="@{/workload(filter='available')}">Has free slots</a></li>
+        </ul>
+
+        <div class="card panel">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                    <tr><th>Employee</th><th>Department</th><th>Pending</th><th>In Progress</th><th>Active</th>
+                        <th>Completed</th><th style="min-width:180px;">Load</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(workloads)}"><td colspan="9" class="text-center text-muted py-4">No employees match this filter.</td></tr>
+                    <tr th:each="w : ${workloads}" th:classappend="${w.overloaded} ? 'table-danger overloaded-row'">
+                        <td>
+                            <div class="fw-semibold" th:text="${w.name}">Name</div>
+                            <div class="small text-muted" th:text="${w.designation}">Designation</div>
+                        </td>
+                        <td th:text="${w.department}">Dept</td>
+                        <td th:text="${w.pendingCount}">0</td>
+                        <td th:text="${w.inProgressCount}">0</td>
+                        <td class="fw-bold" th:classappend="${w.overloaded} ? 'text-danger'" th:text="${w.activeCount}">0</td>
+                        <td th:text="${w.completedCount}">0</td>
+                        <td>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar"
+                                     th:classappend="${w.overloaded} ? 'bg-danger' : (${w.atCapacity} ? 'bg-warning' : 'bg-success')"
+                                     th:style="'width:' + ${w.percent} + '%'"></div>
+                            </div>
+                            <small th:text="${w.activeCount} + ' / ' + ${w.limit}">2 / 5</small>
+                        </td>
+                        <td>
+                            <span th:if="${w.overloaded}" class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill"></i> Overloaded (+<span th:text="${w.excess}">1</span>)</span>
+                            <span th:if="${w.atCapacity}" class="badge bg-warning text-dark">At limit</span>
+                            <span th:if="${!w.overloaded and !w.atCapacity}" class="badge bg-success"><span th:text="${w.remainingSlots}">3</span> free</span>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a th:href="@{/tasks(employeeId=${w.employeeId}, view='active')}" class="btn btn-sm btn-outline-primary">View tasks</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
